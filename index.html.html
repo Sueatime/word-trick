@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Trick</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--h:260;--bg:hsl(var(--h) 30% 9%);--panel:hsl(var(--h) 26% 15%);--ink:hsl(var(--h) 60% 95%);--muted:hsl(var(--h) 20% 68%);--pur:hsl(var(--h) 70% 68%);--g:#22c55e;--y:#eab308;--x:hsl(var(--h) 14% 42%);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Outfit",system-ui,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:480px;padding:24px 16px 40px;text-align:center}
+h1{margin:0 0 4px;font-size:28px}
+.sub{margin:0 0 12px;color:var(--muted);font-size:15px}
+.lg{display:flex;flex-direction:column;gap:4px;font-size:14px;margin:0 0 10px;text-align:left;color:var(--muted);background:var(--panel);padding:10px 12px;border-radius:12px}
+.lg span{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:8px}
+.lg b{color:var(--ink)}
+button{font:inherit;font-weight:600;cursor:pointer}
+#msg{min-height:26px;font-weight:600;margin:6px 0 10px}
+#grid{display:flex;flex-direction:column;gap:5px;align-items:center;margin:0 auto 12px}
+.row{display:flex;gap:5px;justify-content:center}
+.t{--s:min(52px,calc((100vw - 48px - (var(--n) - 1) * 5px) / var(--n)));width:var(--s);height:var(--s);border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;font-size:calc(var(--s) * .5);font-weight:700;text-transform:uppercase;color:var(--ink);background:var(--panel);padding:0;border-radius:8px}
+.t.g{background:var(--g);border-color:var(--g);color:#052e16}
+.t.y{background:var(--y);border-color:var(--y);color:#2a1f00}
+.t.x{background:var(--x);border-color:var(--x);color:#fff}
+.t.sus{outline:3px dashed #ef4444;outline-offset:-5px}
+.in{display:flex;gap:10px;justify-content:center;align-items:center;margin:6px 0 18px}
+input{font:inherit;font-size:22px;letter-spacing:3px;text-transform:uppercase;width:170px;padding:10px;border-radius:8px;border:2px solid var(--pur);background:transparent;color:var(--ink);text-align:center}
+#go{padding:10px 18px;border-radius:8px;border:0;background:var(--pur);color:#1a1033}
+input:disabled,#go:disabled{opacity:.4}
+input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+#ab{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;margin:0 0 10px}
+#ab button{width:100%;height:36px;border-radius:8px;border:0;background:var(--panel);color:var(--ink);padding:0;text-transform:uppercase}
+#ab button.used{background:hsl(var(--h) 20% 42%)}
+#ab button.on{background:var(--pur);color:#1a1033}
+#ab button.off{opacity:.3;text-decoration:line-through}
+.len{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin:0 0 12px;color:var(--muted);font-size:14px}
+.len button{padding:6px 10px;border-radius:8px;border:2px solid var(--muted);background:transparent;color:var(--ink)}
+.len button.sel{background:var(--pur);color:#1a1033;border-color:var(--pur)}
+.acts{display:flex;gap:10px;justify-content:center}
+.acts button{padding:10px 18px;border-radius:8px;background:transparent;color:var(--ink);border:2px solid var(--muted)}
+.acts button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:10}
+</style></head><body>
+<main>
+<h1>Word Trick</h1>
+<p class="sub">Guess the secret word. The colors do not mean what they do in Wordle!</p>
+<div class="lg"><div><span style="background:var(--g)"></span><b>Green</b>: the letter is in the wrong spot, or not in the word</div><div><span style="background:var(--y)"></span><b>Yellow</b>: the letter is in the right spot, or not in the word</div><div><span style="background:var(--x)"></span><b>Gray</b>: the letter is in the word, either in the right spot or in the wrong spot</div></div>
+<div id="ab" aria-label="Alphabet notes"></div>
+<div id="msg" role="status"></div>
+<div id="grid"></div>
+<div class="in"><input id="g" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Your guess"><button id="go">Check</button></div>
+<div class="acts"><button id="nb">New game</button><button id="give">Give up</button></div>
+</main>
+<script>
+const L={
+3:"cat dog sun map pen cup hat bag key box fox owl bee sky ice toy car bus red tea pig cow hen ant bat rat bed pot pan jam nut leg arm eye ear lip sea ink web fan net pie egg cap hop run sit gym zoo oak elm fig yam pea cod ham tin zip wax joy fun sad hot wet cry fly dig hug mud dew fog",
+4:"moon tree fish bird cake lamp rain snow book door game hand king lion milk nest ring star wind wolf bear duck frog goat crab deer lamb seal swan toad worm ship boat bike road farm lake hill rock sand leaf rose seed bell drum flag gold iron jade kite lock mask pear plum rice salt soap sock tent vase wall calm cool dark fast kind lazy mild neat rare soft warm wild wise acid atom bone cake cash city dust edge fire fork gate gift hero idea jump lava luck mind moth noon pool quiz ruby rule sail silk snow song tide tour unit wave wing yarn zone",
+5:"apple brave crane dream eagle flame grape house ivory jelly knife lemon money night ocean piano queen river stone tiger uncle voice water young zebra beach candy dance earth field ghost heart image juice karma light march noble olive paint quiet rainy smile train unity value whale yacht angel blast climb dwell elbow flock glove haste input joker kneel lunch mango nurse orbit pride quest robot shine trust urban vivid wheat bread charm drift ember frost grain honey lucky pearl quilt rough sugar tulip arrow bloom cabin diver equal fancy giant happy jewel koala lofty melon onion plant quick raven spice thumb vital bacon bench berry blade blaze boost brain brush camel carry chair chalk chess chief clock cloud coast coral crown cycle daisy diary dizzy eager early elder enjoy fairy feast fence fiber flute focus forge frame fruit glass globe grass grave green guide horse hotel hurry jazzy kitty label lance laugh layer learn level lilac lunar magic maple marsh media metal mouse mouth music panda party peach pilot pizza plane plaza proud pulse radio ranch reach relax rider round royal salad scale scarf scene shade sheep shelf shirt shore sleep slice snake solar sound space spoon sport squid stamp steam steel storm sunny sweet swing table taste tease tired toast torch tower track trade trail trend truck twist usual video visit waste watch wheel witch world worry yeast abbey acorn actor adult agile alarm alien alley amber angry apron arena argue basil beard beast blank bliss brick brief broad cable cargo cedar chase cheer chunk civic claim clean clerk cliff comet crisp crowd curve delta depth dozen draft eight enter entry fable fever fiery final flash fleet float flood floor flour fresh glory grace grand harsh haven heavy hobby humor icing ideal irony jolly judge knack lyric major mercy mimic minor model moral motor nasty nerve noisy novel opera patch pause phase phone pitch plain poise polar prize pupil quail quota rapid rebel reign rhyme risky rival robin rocky rural sauce scout sense shark sharp shock sight skill slide smart smoke solid sorry spark speed spend spike split spray stage stair stare start stick stock stuff style super swamp swift tango tough trace tribe trick troop tutor valid vault venue vigor vinyl vocal waltz weary whirl woman",
+6:"garden orange purple silver bridge castle dragon forest guitar island jungle monkey pencil rabbit school summer tunnel window yellow planet rocket candle button basket mirror flower cookie anchor animal banana bottle branch bubble camera carpet cherry circle clever coffee corner cotton dinner doctor engine family farmer finger flavor friend garlic ginger hammer heaven honest humble jacket kitten ladder letter market mother muffin nature number pepper pillow pocket potato puzzle rubber sleeve spider sticky stream street string sunset temple ticket tomato travel turtle violin wallet winter wonder absorb active advice alpine arctic autumn bakery beauty bishop bounce breeze bright bronze bucket butter canyon carbon cattle choice cloudy crayon dancer desert detail eleven empire energy expert fabric falcon fiddle flight frozen galaxy gentle global golden insect kernel lizard magnet marble meadow melody method nectar needle noodle online orchid palace parade parrot pebble plenty pretty prince public safari salmon season shadow signal simple social spring square stable stripe supper tablet tender thrill timber tissue trophy vacuum velvet vessel volume wisdom yogurt zipper",
+7:"balance cabinet diamond element freedom general harvest journey kingdom library machine natural orchard penguin quality rainbow station texture village weather chicken blanket dolphin chimney biscuit brother captain cartoon chapter clarity compass concert courage crystal curtain desktop eclipse elegant fashion feather fiction fortune garment gesture history holiday imagine insight kitchen lantern leopard lottery mansion mystery network octopus package painter pattern picture pioneer plastic popcorn pumpkin rooster seaside shelter silence sunrise teacher theater traffic trumpet unicorn vintage whisper acrobat bargain battery blossom brewery cabbage calcium capital caravan chamber channel climate cluster college comfort complex costume cottage cushion diploma dynamic emerald evening explore factory fantasy flannel foreign forward freckle gallery garbage glacier gravity grocery habitat hamster harmony horizon hundred husband journal justice lecture lobster mineral monster morning mustard nothing outdoor palette passion pelican perfume pretend problem profile program quarter railway reality reflect scholar science scooter shallow soldier special stadium stomach student subject sunbeam surface surgeon sweater swallow thunder tourist trouble venture volcano warrior weekend whistle"};
+let secret,n,rows,cur,over,marks,want=0;
+function grade(g,s){const r=Array(n).fill('x'),u=s.split('');
+ for(let i=0;i<n;i++)if(g[i]===s[i]){r[i]='g';u[i]=null}
+ for(let i=0;i<n;i++)if(r[i]==='x'){const j=u.indexOf(g[i]);if(j>-1){r[i]='y';u[j]=null}}
+ return r}
+function show(t,g){const p=()=>Math.random()<.5;return t.map((c,i)=>c==='g'?(p()?'y':'x'):c==='y'?(p()?'g':'x'):(!secret.includes(g[i])&&p()?'y':'g'))}
+function start(){n=want||3+Math.floor(Math.random()*5);const a=L[n].split(" ");secret=a[Math.floor(Math.random()*a.length)];
+ rows=[];cur="";over=false;marks={};const g0=document.getElementById('g');g0.value="";g0.maxLength=n;g0.disabled=false;document.getElementById('go').disabled=false;ab();document.getElementById('give').disabled=false;
+ msg("A "+n+"-letter word. Read the colors carefully!");draw()}
+function msg(t){document.getElementById('msg').textContent=t}
+function draw(){const g=document.getElementById('grid');g.innerHTML="";
+ const total=rows.length+(over?0:1);
+ for(let r=0;r<total;r++){const row=document.createElement('div');row.className='row';
+  for(let c=0;c<n;c++){const b=document.createElement('button');b.className='t';b.style.setProperty('--n',n);
+   if(r<rows.length){b.classList.add(rows[r].s[c]);b.textContent=rows[r].w[c];
+    if(marks[r+'-'+c])b.classList.add('sus');
+    b.onclick=()=>{marks[r+'-'+c]=!marks[r+'-'+c];draw()}}
+   else{b.disabled=true;b.textContent=cur[c]||""}
+   row.appendChild(b)}
+  g.appendChild(row)}
+ g.lastChild&&g.lastChild.scrollIntoView({block:"nearest"})}
+function fits(w){for(const r of rows)for(let i=0;i<n;i++){const c=r.s[i],L=r.w[i],U=L.toUpperCase();
+ if(c==='y'&&w[i]!==L&&w.includes(L))return U+" must be in position "+(i+1)+" or not in the word (it was yellow there).";
+ if(c==='g'&&w[i]===L)return U+" cannot be in position "+(i+1)+" (it was green there).";
+ if(c==='x'&&!w.includes(L))return "The word must contain "+U+" (it was gray)."}return ""}
+function submit(){if(over)return;if(cur.length<n){msg("Need "+n+" letters.");return}
+ const why=fits(cur);if(why){msg("The word does not fit the tiles. "+why);return}
+ rows.push({w:cur,s:show(grade(cur,secret),cur)});used();
+ if(cur===secret){over=true;document.getElementById('give').disabled=true;document.getElementById('g').disabled=true;document.getElementById('go').disabled=true;msg("You got it: "+secret.toUpperCase()+" in "+rows.length+" guess"+(rows.length>1?"es":"")+"! 🎉");confetti()}
+ else msg("Guess "+(rows.length+1)+". Read the colors carefully.");document.getElementById('g').value="";
+ cur="";draw()}
+function key(k){if(over)return;if(k==="Enter")submit();
+ else if(k==="Backspace"){cur=cur.slice(0,-1);draw()}
+ else if(/^[a-z]$/i.test(k)&&cur.length<n){cur+=k.toLowerCase();draw()}}
+const gi=document.getElementById('g');
+gi.addEventListener('input',()=>{if(over)return;gi.value=gi.value.replace(/[^a-z]/gi,'').toLowerCase();cur=gi.value;draw()});
+gi.addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
+document.getElementById('go').onclick=submit;
+function used(){const u=new Set(rows.flatMap(r=>r.w.split('')));document.querySelectorAll('#ab button').forEach(b=>b.classList.toggle('used',u.has(b.textContent)))}
+function ab(){const a=document.getElementById('ab');a.innerHTML="";for(const ch of "abcdefghijklmnopqrstuvwxyz"){const b=document.createElement('button');b.textContent=ch;let s=0;b.onclick=()=>{s=(s+1)%3;b.classList.remove('on','off');if(s===1)b.classList.add('on');if(s===2)b.classList.add('off')};a.appendChild(b)}}
+document.getElementById('nb').onclick=start;
+document.getElementById('give').onclick=()=>{if(over)return;over=true;document.getElementById('give').disabled=true;document.getElementById('g').disabled=true;document.getElementById('go').disabled=true;cur="";msg("You gave up. The word was "+secret.toUpperCase()+".");draw()};
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const c=document.createElement("canvas");c.id="confetti";c.width=innerWidth;c.height=innerHeight;document.body.append(c);
+  const x=c.getContext("2d"),cols=[0,45,150,200,260,320].map(h=>`hsl(${h} 85% 55%)`);
+  const ps=Array.from({length:150},()=>({x:innerWidth/2+(Math.random()-.5)*160,y:innerHeight*.35,vx:(Math.random()-.5)*15,vy:-Math.random()*13-4,s:6+Math.random()*6,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[Math.floor(Math.random()*cols.length)]}));
+  let t=0;
+  (function f(){
+    x.clearRect(0,0,c.width,c.height);t++;
+    ps.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});
+    if(t<160)requestAnimationFrame(f);else c.remove();
+  })();
+}
+start();
+</script></body></html>
